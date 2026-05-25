@@ -663,56 +663,162 @@ HIRA_DB = {
 }
 
 def page_criteria():
-    banner("📋","심사기준 조회","심평원 급여기준 · 고시 내용 · 청구 가이드라인 통합 조회")
+    PORTAL_URL = "https://biz.hira.or.kr/index.do"
+    banner("📋","심사기준 조회","요양기관업무포털 심사기준 종합서비스 연동 · 내부 기준 DB 통합 제공")
     data = load_pres()
+
+    # ── 포털 접속 안내 박스 ──────────────────────────────────────────────────
+    st.markdown(f"""
+    <div style="background:linear-gradient(135deg,#EBF5FF,#F0FAF8);border:2px solid #A8DDD8;
+                border-radius:14px;padding:1.3rem 1.5rem;margin-bottom:1.2rem;
+                box-shadow:0 2px 10px rgba(14,139,122,0.1);">
+      <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1rem;">
+        <span style="font-size:1.6rem;">🏥</span>
+        <div>
+          <div style="font-size:1rem;font-weight:800;color:#0E6655;">심사기준 조회 방법 안내</div>
+          <div style="font-size:0.78rem;color:#5D8A82;margin-top:1px;">심평원 사이트는 외부 직접 링크 접근이 차단됩니다 — 요양기관업무포털을 통해 접속하세요</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1rem;">
+        <div style="display:flex;gap:0.6rem;align-items:center;">
+          <span style="background:#0E8B7A;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;">1</span>
+          <span style="font-size:0.87rem;color:#1A3A35;">아래 <strong>요양기관업무포털 접속</strong> 버튼 클릭</span>
+        </div>
+        <div style="display:flex;gap:0.6rem;align-items:center;">
+          <span style="background:#0E8B7A;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;">2</span>
+          <span style="font-size:0.87rem;color:#1A3A35;">공인인증서/간편인증으로 <strong>로그인</strong> 후 메인화면에서 <span style="background:#FEF4DC;color:#8A5C00;border-radius:4px;padding:0.08rem 0.4rem;font-weight:700;">심사기준 종합서비스</span> 클릭</span>
+        </div>
+        <div style="display:flex;gap:0.6rem;align-items:center;">
+          <span style="background:#0E8B7A;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;">3</span>
+          <span style="font-size:0.87rem;color:#1A3A35;">아래 검색창에서 코드/품목명 검색 → <strong>포털 검색어</strong> 복사 후 붙여넣기</span>
+        </div>
+      </div>
+      <div style="font-size:0.72rem;color:#5D8A82;background:rgba(14,139,122,0.07);border-radius:8px;padding:0.45rem 0.8rem;">
+        ⚠️ 포털 접속에는 요양기관 담당자 계정(공인인증서 또는 간편인증)이 필요합니다.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_b1, col_b2, _ = st.columns([2, 2, 3])
+    with col_b1:
+        st.link_button("🏥 요양기관업무포털 접속", PORTAL_URL)
+    with col_b2:
+        st.link_button("📋 심사기준 종합서비스", PORTAL_URL)
+
+    divider()
+    st.markdown("#### 🔍 내부 기준 DB 검색 + 포털 검색어 안내")
     col_s, col_b = st.columns([5, 1])
     with col_s:
-        query = st.text_input("", placeholder="처방코드 또는 품목명 (예: HA021, 초음파, 신경전도)",
+        query = st.text_input("", placeholder="처방코드 또는 품목명 입력 (예: HA021, 초음파, 씨엠쿨산, 신경전도)",
                               label_visibility="collapsed", key="cr_query")
     with col_b:
-        st.button("조회", key="cr_search")
-    divider()
+        st.button("검색", key="cr_search")
 
     if query.strip():
         matched = [d for d in data if
                    query.lower() in d["code"].lower() or query.lower() in d["name"].lower() or
                    any(query.lower() in t.lower() for t in d["tags"])]
         if not matched:
-            alert("info","ℹ️","해당 코드의 심사기준 데이터가 없습니다.")
-            st.link_button("🔗 심평원 급여기준 바로가기","https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020044020000")
+            alert("info","ℹ️",f"내부 DB에 <strong>\'{query}\'</strong> 관련 기준이 없습니다. 요양기관업무포털에서 직접 검색하세요.")
+            st.markdown(f"""
+            <div style="background:var(--gold-lt);border:2px solid #F0C96B;border-radius:12px;padding:1.1rem 1.3rem;margin-top:0.5rem;">
+              <div style="font-size:0.84rem;font-weight:700;color:#6B4A00;margin-bottom:0.5rem;">📋 포털 심사기준 종합서비스 검색어 (복사 후 붙여넣기)</div>
+              <div style="font-family:var(--mono);font-size:1rem;font-weight:700;color:#3D2A00;
+                          background:#fff;border:1.5px solid #F0C96B;border-radius:8px;padding:0.5rem 1rem;">
+                {query}
+              </div>
+              <div style="font-size:0.74rem;color:#8A6200;margin-top:0.45rem;">위 검색어 복사 → 포털 접속 → 심사기준 종합서비스 → 검색창에 붙여넣기</div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.link_button("🏥 요양기관업무포털에서 검색하기 →", PORTAL_URL)
             footer(); return
+
         for item in matched:
             hira = HIRA_DB.get(item["code"])
             with st.expander(f'📋 [{item["code"]}] {item["name"]} — 심사기준', expanded=True):
+                st.markdown(f"""
+                <div style="background:var(--gold-lt);border:1.5px solid #F0C96B;border-radius:10px;padding:0.8rem 1.1rem;margin-bottom:0.9rem;">
+                  <div style="font-size:0.74rem;font-weight:700;color:#6B4A00;margin-bottom:0.45rem;">🏥 요양기관업무포털 심사기준 종합서비스 검색어</div>
+                  <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+                    <span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#3D2A00;background:#fff;border:1.5px solid #F0C96B;border-radius:6px;padding:0.25rem 0.75rem;">{item["code"]}</span>
+                    <span style="font-size:0.74rem;color:#8A6200;">또는</span>
+                    <span style="font-family:var(--mono);font-size:0.9rem;font-weight:700;color:#3D2A00;background:#fff;border:1.5px solid #F0C96B;border-radius:6px;padding:0.25rem 0.75rem;">{item["name"]}</span>
+                    <a href="{PORTAL_URL}" target="_blank"
+                       style="margin-left:auto;background:#0E8B7A;color:#fff;border-radius:7px;padding:0.28rem 0.85rem;font-size:0.77rem;font-weight:700;text-decoration:none;white-space:nowrap;">
+                       🏥 포털에서 검색 →
+                    </a>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
                 if hira:
-                    st.markdown(f'<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;">📌 출처: {hira["source"]} &nbsp;|&nbsp; 🗓 {hira["updated"]}</div>', unsafe_allow_html=True)
-                    st.link_button("원문 보기 →","https://www.hira.or.kr")
+                    st.markdown(f'<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;">📌 출처: {hira["source"]} &nbsp;|&nbsp; 🗓 최종 업데이트: {hira["updated"]}</div>', unsafe_allow_html=True)
                     st.markdown(f'<div class="criteria-block">{hira["content"].replace(chr(10),"<br>")}</div>', unsafe_allow_html=True)
                 else:
                     st.markdown(f'<div class="criteria-block">{item["criteria"]}</div>', unsafe_allow_html=True)
-                    alert("info","🔗","심평원 원문 기준은 아래 링크에서 확인하세요.")
-                    st.link_button("심평원 급여기준 조회 →","https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020044020000")
+                    alert("info","ℹ️","내부 DB 기준입니다. 최신 심평원 고시 원문은 요양기관업무포털에서 확인하세요.")
     else:
         st.markdown("#### 📌 자주 조회되는 심사기준")
-        popular = [("HA021","초음파 검사(복부)","재검사 6개월 기준, GJ999 필수"),
-                   ("NS100","신경전도검사","동시산정 50% 규정 주의"),
-                   ("648602750","씨엠쿨산","외래 전용, GJ001/GJ002 필수"),
-                   ("PT050","도수치료","건강보험 비급여 — 급여 청구 금지"),
-                   ("RD001","흉부X선","정면·측면 동시 촬영 시 패키지 코드")]
+        st.markdown('<div style="font-size:0.82rem;color:var(--muted);margin-bottom:0.8rem;">검색창에 코드/품목명 입력 → 내부 기준 확인 + 포털 검색어 자동 안내</div>', unsafe_allow_html=True)
+        popular = [
+            ("HA021","초음파 검사(복부)","재검사 6개월 기준, GJ999 필수"),
+            ("NS100","신경전도검사","동시산정 50% 규정 주의"),
+            ("648602750","씨엠쿨산","외래 전용, GJ001/GJ002 필수"),
+            ("PT050","도수치료","건강보험 비급여 — 급여 청구 금지"),
+            ("RD001","흉부X선","정면·측면 동시 촬영 시 패키지 코드"),
+            ("LB001","혈액검사(CBC)","동일날짜 중복 청구 주의"),
+            ("MZ100","처치료(일반)","입원환자 GJ003 필수 기재"),
+            ("AL300","외래환자의약품관리료","외래 전용·입원 산정 불가"),
+        ]
         for code, name, note in popular:
             st.markdown(f"""
             <div class="result-card">
-              <div style="display:flex;align-items:center;gap:0.75rem;">
+              <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
                 <span class="rc-code">{code}</span>
-                <span style="font-weight:600;">{name}</span>
-                <span style="margin-left:auto;font-size:0.8rem;color:var(--muted);">{note}</span>
+                <span style="font-weight:700;">{name}</span>
+                <span style="font-size:0.79rem;color:var(--muted);">{note}</span>
+                <a href="{PORTAL_URL}" target="_blank"
+                   style="margin-left:auto;background:var(--teal-lt);color:var(--teal);border:1px solid #A8DDD8;
+                          border-radius:7px;padding:0.2rem 0.7rem;font-size:0.74rem;font-weight:700;
+                          text-decoration:none;white-space:nowrap;">🏥 포털 검색 →</a>
               </div>
             </div>""", unsafe_allow_html=True)
+
         divider()
-        c1, c2, c3 = st.columns(3)
-        with c1: st.link_button("📘 급여기준 조회","https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020044020000")
-        with c2: st.link_button("📊 수가정보 조회","https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA020041000000")
-        with c3: st.link_button("📰 공지사항","https://www.hira.or.kr/bbsDummy.do?pgmid=HIRAA010020000000")
+        st.markdown("#### 🗺 요양기관업무포털 심사기준 종합서비스 이용 순서")
+        st.markdown(f"""
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:1.3rem 1.5rem;box-shadow:var(--shadow);">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.9rem;text-align:center;">
+            <div style="background:var(--teal-lt);border-radius:10px;padding:0.9rem 0.4rem;">
+              <div style="font-size:1.4rem;margin-bottom:0.35rem;">🌐</div>
+              <div style="font-size:0.72rem;font-weight:700;color:var(--teal);">STEP 1</div>
+              <div style="font-size:0.8rem;font-weight:600;margin-top:0.15rem;">포털 접속</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem;">biz.hira.or.kr</div>
+            </div>
+            <div style="background:var(--blue-lt);border-radius:10px;padding:0.9rem 0.4rem;">
+              <div style="font-size:1.4rem;margin-bottom:0.35rem;">🔐</div>
+              <div style="font-size:0.72rem;font-weight:700;color:var(--blue);">STEP 2</div>
+              <div style="font-size:0.8rem;font-weight:600;margin-top:0.15rem;">로그인</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem;">공인인증/간편인증</div>
+            </div>
+            <div style="background:var(--gold-lt);border-radius:10px;padding:0.9rem 0.4rem;">
+              <div style="font-size:1.4rem;margin-bottom:0.35rem;">📋</div>
+              <div style="font-size:0.72rem;font-weight:700;color:var(--gold);">STEP 3</div>
+              <div style="font-size:0.8rem;font-weight:600;margin-top:0.15rem;">심사기준 종합서비스</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem;">메인화면에서 선택</div>
+            </div>
+            <div style="background:var(--red-lt);border-radius:10px;padding:0.9rem 0.4rem;">
+              <div style="font-size:1.4rem;margin-bottom:0.35rem;">🔍</div>
+              <div style="font-size:0.72rem;font-weight:700;color:var(--red);">STEP 4</div>
+              <div style="font-size:0.8rem;font-weight:600;margin-top:0.15rem;">코드/품목명 검색</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem;">위 검색어 복사 입력</div>
+            </div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        cp1, cp2 = st.columns(2)
+        with cp1: st.link_button("🏥 요양기관업무포털 바로가기", PORTAL_URL)
+        with cp2: st.link_button("📞 심평원 고객센터 1644-2000", PORTAL_URL)
     footer()
 
 # ──────────────────────────────────────────────────────────────────────────────
